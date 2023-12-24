@@ -1,49 +1,10 @@
 <img src="https://github.com/bdring/FluidNC/wiki/images/logos/FluidNC.svg" width="600">
 
-## Introduction
+## Why yet another fork
 
-**FluidNC** is a CNC firmware optimized for the ESP32 controller. It is the next generation of firmware from the creators of Grbl_ESP32. It includes a web based UI and the flexibility to operate a wide variety of machine types. This includes the ability to control machines with multiple tool types such as laser plus spindle or a tool changer.  
+Unfortunately for the owners of VFDs that are able to get and set the frequency in RPM, in FluidNC the pure RPM data from gCode gets corrupted on the system level by dividing it by 0.6 and thus losing some precision (i.e. 10 000 / 0.6 = 16666.6666~) so the reverse conversion might be off in the last digit because of the rounding which in turn might lead to VDD's screen showing 999 instead of 1000 or the current speed never reaching the requested one.  Another side effect is that all the debug messages will be off by 1.66, so if you enable debug and set the speed to 1000 RPM - you'd likely see something like this:
 
-## Firmware Architecture
+MSG:DBG: Synced speed. Requested:1666 current:1665
 
-- Object-Oriented hierarchical design
-- Hardware abstraction for machine features like spindles, motors, and stepper drivers
-- Extensible - Adding new features is much easier for the firmware as well as gcode senders.
+Now this kind of behavior is absolutely unacceptable to me, so I had to turn it off in the main codebase, but this fork will only work with Mitsubishi VFD at the moment, because any other spindle driver expects the speed not in RPM but in .01 Hz.
 
-## Machine Definition Method
-
-There is no need to compile the firmware. You use an installation script to upload the latest release of the firmware and then create [config file](http://wiki.fluidnc.com/en/config/overview) text file that describes your machine.  That file is uploaded to the FLASH on the ESP32 using the USB/Serial port or WIFI.
-
-You can have multiple config files stored on the ESP32. The default is config.yaml, but you can change that with [**$Config/Filename=<myOtherConfig.yaml>**](http://wiki.fluidnc.com/en/features/commands_and_settings#config_filename)
-
-## Basic Grbl Compatibility
-
-The intent is to maintain as much Grbl compatibility as possible. It is 100% compatible with the day to day operations of running gcode with a sender, so there is no change to the Grbl gcode send/response protocol, and all Grbl gcode are supported. Most of the $ settings have been replaced with easily readable items in the config file.
-
-
-## WebUI
-
-FluidNC includes a built-in browser-based Web UI (Esp32_WebUI) so you control the machine from a PC, phone, or tablet on the same Wifi network.
-
-## Wiki
-
-[Check out the wiki](http://wiki.fluidnc.com) if you want the learn more about the feature or how to use it.
-
-## Credits
-
-The original [Grbl](https://github.com/gnea/grbl) is an awesome project by Sungeon (Sonny) Jeon. I have known him for many years and he is always very helpful. I have used Grbl on many projects.
-
-The Wifi and WebUI is based on [this project.](https://github.com/luc-github/ESP3D-WEBUI)  
-
-## Discussion
-
-<img src="http://wiki.fluidnc.com/discord-logo_trans.png" width="180">
-
-We have a Discord server for the development this project. Ask for an invite
-
-
-## Donations
-
-This project requires a lot of work and often expensive items for testing. Please consider a safe, secure and highly appreciated donation via the PayPal link below or via the GitHub sponsor link at the top of the page.
-
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate/?hosted_button_id=8DYLB6ZYYDG7Y)
