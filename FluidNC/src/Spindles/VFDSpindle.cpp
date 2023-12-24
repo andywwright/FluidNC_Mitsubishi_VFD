@@ -310,7 +310,7 @@ namespace Spindles {
 
         bool critical = (sys.state == State::Cycle || state != SpindleState::Disable);
 
-        uint32_t dev_speed = mapSpeed(speed);
+        uint32_t dev_speed = speed;
         log_debug("RPM:" << speed << " mapped to device units:" << dev_speed);
 
         if (_current_state != state) {
