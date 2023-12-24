@@ -4,7 +4,7 @@
 /*
     MitsubishiCS8xSpindle.cpp
 
-    This is for the new MitsubishiCS8x MitsubishiCS8x VFD based spindle via RS485 Modbus.
+    This is for the MitsubishiCS8x VFD based spindle via RS485 Modbus.
 
                          WARNING!!!!
     VFDs are very dangerous. They have high voltages and are very powerful
@@ -12,13 +12,11 @@
 */
 
 #include "MitsubishiCS8xSpindle.h"
-#include "../System.h"
 
 namespace Spindles {
     MitsubishiCS8x::MitsubishiCS8x() : VFD() {}
 
     void MitsubishiCS8x::direction_command(SpindleState mode, ModbusCommand& data) {
-        // I don't use directions, just sending STOP for now
         data.tx_length = 6;
         data.rx_length = 6;
 
