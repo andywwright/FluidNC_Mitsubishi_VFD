@@ -310,6 +310,11 @@ namespace Spindles {
 
         bool critical = (sys.state == State::Cycle || state != SpindleState::Disable);
 
+        if (!speed) { // Sending Speed = 0 command before turning the spindle OFF causes unnecessary active braking
+            set_mode(SpindleState::Disable, critical);
+            return;
+        }
+
         uint32_t dev_speed = speed;
         log_debug("RPM:" << speed << " mapped to device units:" << dev_speed);
 
