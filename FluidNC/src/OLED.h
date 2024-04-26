@@ -41,7 +41,7 @@ private:
     float       _percent;
     std::string _ticker;
 
-    int _radio_delay = 0;
+    int _radio_delay        = 0;
     int _report_interval_ms = 500;
 
     uint8_t _i2c_num = 0;
@@ -97,6 +97,8 @@ public:
     uint8_t _address = 0x3c;
     int     _width   = 64;
     int     _height  = 48;
+    bool     _flip    = true;
+    bool     _mirror  = false;
 
     // Channel method overrides
 
@@ -122,6 +124,8 @@ public:
         handler.item("i2c_address", _address);
         handler.item("width", _width);
         handler.item("height", _height);
+        handler.item("flip", _flip);
+        handler.item("mirror", _mirror);
         handler.item("radio_delay_ms", _radio_delay);
     }
 };
