@@ -28,9 +28,6 @@ namespace Machine {
         uint32_t stepRate = uint32_t(_stepsPerMm * _maxRate / 60.0);
         auto     maxRate  = config->_stepping->maxPulsesPerSec();
         Assert(stepRate <= maxRate, "Stepping rate %d steps/sec exceeds the maximum rate %d", stepRate, maxRate);
-        if (_homing == nullptr) {
-            _homing = new Homing();
-        }
         if (_motors[0] == nullptr) {
             _motors[0] = new Machine::Motor(_axis, 0);
         }
@@ -44,14 +41,13 @@ namespace Machine {
                 m->init();
             }
         }
-        if (_homing && _homing->_cycle != 0) {
+        if (_homing && _homing->_cycle >= 0) {
             _homing->init();
             set_bitnum(Axes::homingMask, _axis);
         }
 
         if (!_motors[0] && _motors[1]) {
-            sys.state = State::ConfigAlarm;
-            log_error("motor1 defined without motor0");
+            log_config_error("motor1 defined without motor0");
         }
 
         // If dual motors and only one motor has switches, this is the configuration
@@ -82,7 +78,9 @@ namespace Machine {
     }
 
     // Does this axis have 2 motors?
-    bool Axis::hasDualMotor() { return _motors[0] && _motors[0]->isReal() && _motors[1] && _motors[1]->isReal(); }
+    bool Axis::hasDualMotor() {
+        return _motors[0] && _motors[0]->isReal() && _motors[1] && _motors[1]->isReal();
+    }
 
     // How many motors have switches defined?
     int Axis::motorsWithSwitches() {

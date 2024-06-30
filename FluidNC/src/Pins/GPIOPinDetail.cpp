@@ -101,21 +101,21 @@ namespace Pins {
                 if (_capabilities.has(PinCapabilities::PullUp)) {
                     _attributes = _attributes | PinAttributes::PullUp;
                 } else {
-                    log_warn(toString() << " does not support :pu attribute");
+                    log_config_error(toString() << " does not support :pu attribute");
                 }
 
             } else if (opt.is("pd")) {
                 if (_capabilities.has(PinCapabilities::PullDown)) {
                     _attributes = _attributes | PinAttributes::PullDown;
                 } else {
-                    log_warn(toString() << " does not support :pd attribute");
+                    log_config_error(toString() << " does not support :pd attribute");
                 }
             } else if (opt.is("low")) {
                 _attributes = _attributes | PinAttributes::ActiveLow;
             } else if (opt.is("high")) {
                 // Default: Active HIGH.
             } else {
-                Assert(false, "Bad GPIO option passed to pin %d: %s", int(index), opt());
+                Assert(false, "Bad GPIO option passed to pin %d: %.*s", int(index), static_cast<int>(opt().length()), opt().data());
             }
         }
         _claimed[index] = true;
@@ -124,9 +124,13 @@ namespace Pins {
         _readWriteMask = int(_attributes.has(PinAttributes::ActiveLow));
     }
 
-    PinAttributes GPIOPinDetail::getAttr() const { return _attributes; }
+    PinAttributes GPIOPinDetail::getAttr() const {
+        return _attributes;
+    }
 
-    PinCapabilities GPIOPinDetail::capabilities() const { return _capabilities; }
+    PinCapabilities GPIOPinDetail::capabilities() const {
+        return _capabilities;
+    }
 
     void IRAM_ATTR GPIOPinDetail::write(int high) {
         if (high != _lastWrittenValue) {
@@ -180,7 +184,7 @@ namespace Pins {
     }
 
     void GPIOPinDetail::registerEvent(EventPin* obj) {
-        gpio_set_action(_index, gpioAction, (void*)obj, _attributes.has(Pin::Attr::ActiveLow));
+        gpio_set_action(_index, gpioAction, reinterpret_cast<void*>(obj), _attributes.has(Pin::Attr::ActiveLow));
     }
 
     std::string GPIOPinDetail::toString() {

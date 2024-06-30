@@ -78,7 +78,7 @@ uint32_t Channel::setReportInterval(uint32_t ms) {
     return actual;
 }
 static bool motionState() {
-    return sys.state == State::Cycle || sys.state == State::Homing || sys.state == State::Jog;
+    return state_is(State::Cycle) || state_is(State::Homing) || state_is(State::Jog);
 }
 
 void Channel::autoReportGCodeState() {
@@ -104,15 +104,17 @@ void Channel::autoReportGCodeState() {
 void Channel::autoReport() {
     if (_reportInterval) {
         auto thisProbeState = config->_probe->get_state();
-        if (thisProbeState != _lastProbe) {
-            report_recompute_pin_string();
-        }
-        if (_reportWco || sys.state != _lastState || thisProbeState != _lastProbe || _lastPinString != report_pin_string ||
+        report_recompute_pin_string();
+        if (_reportOvr || _reportWco || !state_is(_lastState) || thisProbeState != _lastProbe || _lastPinString != report_pin_string ||
             (motionState() && (int32_t(xTaskGetTickCount()) - _nextReportTime) >= 0)) {
+            if (_reportOvr) {
+                report_ovr_counter = 0;
+                _reportOvr         = false;
+            }
             if (_reportWco) {
                 report_wco_counter = 0;
+                _reportWco         = false;
             }
-            _reportWco     = false;
             _lastState     = sys.state;
             _lastProbe     = thisProbeState;
             _lastPinString = report_pin_string;
@@ -183,7 +185,7 @@ void Channel::push(uint8_t byte) {
     }
 }
 
-Channel* Channel::pollLine(char* line) {
+Error Channel::pollLine(char* line) {
     handle();
     while (1) {
         int ch = -1;
@@ -195,6 +197,7 @@ Channel* Channel::pollLine(char* line) {
             if (ch < 0) {
                 break;
             }
+            _active = true;
             if (realtimeOkay(ch) && is_realtime_command(ch)) {
                 handleRealtimeCharacter((uint8_t)ch);
                 continue;
@@ -207,13 +210,13 @@ Channel* Channel::pollLine(char* line) {
         }
 
         if (lineComplete(line, ch)) {
-            return this;
+            return Error::Ok;
         }
     }
     if (_active) {
         autoReport();
     }
-    return nullptr;
+    return Error::NoData;
 }
 
 void Channel::setAttr(int index, bool* value, const std::string& attrString, const char* tag) {
@@ -257,11 +260,12 @@ void Channel::ack(Error status) {
     // With verbose errors, the message text is displayed instead of the number.
     // Grbl 0.9 used to display the text, while Grbl 1.1 switched to the number.
     // Many senders support both formats.
-    LogStream msg(*this, "error:");
-    if (config->_verboseErrors) {
-        msg << errorString(status);
-    } else {
+    {
+        LogStream msg(*this, "error:");
         msg << static_cast<int>(status);
+    }
+    if (config->_verboseErrors) {
+        log_error_to(*this, errorString(status));
     }
 }
 
@@ -334,7 +338,9 @@ bool Channel::is_visible(const std::string& stem, const std::string& extension, 
     if (isdir) {
         return true;
     }
-    std::string_view extensions(_gcode_extensions);
+
+    // common gcode extensions
+    std::string_view extensions(".g .gc .gco .gcode .nc .ngc .ncc .txt .cnc .tap");
     int              pos = 0;
     while (extensions.length()) {
         auto             next_pos       = extensions.find_first_of(' ', pos);

@@ -308,7 +308,7 @@ namespace Spindles {
             return;  // Block during abort.
         }
 
-        bool critical = (sys.state == State::Cycle || state != SpindleState::Disable);
+        bool critical = (state_is(State::Cycle) || state != SpindleState::Disable);
 
         if (!speed) { // Sending Speed = 0 command before turning the spindle OFF causes unnecessary active braking
             set_mode(SpindleState::Disable, critical);

@@ -32,6 +32,7 @@
 #include "WebUI/BTConfig.h"              // bt_config
 #include "WebUI/WebSettings.h"
 #include "InputFile.h"
+#include "Job.h"
 
 #include <map>
 #include <freertos/task.h>
@@ -67,6 +68,7 @@ void _notifyf(const char* title, const char* format, ...) {
     if (len >= sizeof(loc_buf)) {
         temp = new char[len + 1];
         if (temp == NULL) {
+            va_end(arg);
             return;
         }
     }
@@ -630,8 +632,8 @@ void report_realtime_status(Channel& channel) {
             }
         }
     }
-    if (InputFile::_progress.length()) {
-        msg << "|" + InputFile::_progress;
+    if (Job::active()) {
+        msg << "|" << Job::channel()->_progress;
     }
 #ifdef DEBUG_STEPPER_ISR
     msg << "|ISRs:" << Stepper::isr_count;

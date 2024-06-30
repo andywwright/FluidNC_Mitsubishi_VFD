@@ -43,13 +43,16 @@ namespace MotorDrivers {
         // Run and hold current configuration items are in (float) Amps,
         // but the TMCStepper library expresses run current as (uint16_t) mA
         // and hold current as (float) fraction of run current.
-        uint16_t run_i = (uint16_t)(_run_current * 1000.0);
+        float    _mode_current = isHoming ? _homing_current : _run_current;
+        uint16_t run_i         = (uint16_t)(_mode_current * 1000.0);
 
         _cs_pin.synchronousWrite(true);
 
         tmc2209->I_scale_analog(false);  // do not scale via pot
+        log_debug("sr 3'");
         tmc2209->rms_current(run_i, TrinamicBase::holdPercent());
 
+        log_debug("sr 4");
         // The TMCStepper library uses the value 0 to mean 1x microstepping
         int usteps = _microsteps == 1 ? 0 : _microsteps;
         tmc2209->microsteps(usteps);
@@ -68,12 +71,10 @@ namespace MotorDrivers {
                 break;
             case TrinamicMode ::StallGuard:  //TODO: check all configurations for stallguard
             {
-                auto axisConfig     = config->_axes->_axis[this->axis_index()];
-                auto homingFeedRate = (axisConfig->_homing != nullptr) ? axisConfig->_homing->_feedRate : 200;
                 log_debug(axisName() << " Stallguard");
                 tmc2209->en_spreadCycle(false);
                 tmc2209->pwm_autoscale(true);
-                tmc2209->TCOOLTHRS(calc_tstep(homingFeedRate, 150.0));
+                tmc2209->TCOOLTHRS(calc_tstep(150));
                 tmc2209->SGTHRS(_stallguard);
                 break;
             }

@@ -89,9 +89,9 @@ void OLED::init() {
     setReportInterval(_report_interval_ms);
 }
 
-Channel* OLED::pollLine(char* line) {
+Error OLED::pollLine(char* line) {
     autoReport();
-    return nullptr;
+    return Error::NoData;
 }
 
 void OLED::show_state() {
@@ -198,7 +198,7 @@ void OLED::show_radio_info() {
 void OLED::parse_numbers(std::string s, float* nums, int maxnums) {
     size_t pos     = 0;
     size_t nextpos = -1;
-    size_t i;
+    size_t i       = 0;
     do {
         if (i >= maxnums) {
             return;
